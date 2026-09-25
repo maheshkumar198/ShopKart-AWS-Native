@@ -14,17 +14,18 @@ permissions:
 
 env:
   REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
-  IMAGE_NAME: shopkart/frontend
+  IMAGE_NAME: shopkart/ecs-frontend
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: development
+
     permissions:
       contents: read
       id-token: write
-  
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
@@ -35,29 +36,28 @@ jobs:
           dockerfile: web/Dockerfile
           failure-threshold: warning
 
-
       - name: Build Docker image
         run: |
-          docker build  -t "shopkart/ecs-frontend:${{ github.sha }}" "web"
-          
-    
+          docker build \
+            -t "${IMAGE_NAME}:${IMAGE_TAG}" \
+            web
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.2.4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-ecr-role 
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-ecr-role
           aws-region: ap-south-1
           audience: sts.amazonaws.com
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2 
-        
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Tag image and push to ECR
         run: |
-    
           ECR_IMAGE="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+
           docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${ECR_IMAGE}"
           docker push "${ECR_IMAGE}"
+
           docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${REGISTRY}/${IMAGE_NAME}:latest"
           docker push "${REGISTRY}/${IMAGE_NAME}:latest"
-
-    
