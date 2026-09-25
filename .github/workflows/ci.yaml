@@ -181,7 +181,7 @@ jobs:
           - order-service
     env:
       REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
-      IMAGE_NAME: shopkart/ecs${{ matrix.service }}
+      IMAGE_NAME: shopkart/ecs-${{ matrix.service }}
       IMAGE_TAG: ${{ github.sha }}
       
     steps:
