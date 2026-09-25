@@ -136,7 +136,7 @@ function authRequired(req, res, next) {
   }
 }
 
-app.post("/auth/register", async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password || password.length < 6) {
     registrations.inc({ result: "invalid" });
@@ -167,7 +167,7 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-app.post("/auth/login", async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) { loginAttempts.inc({ result: "invalid" }); return res.status(400).json({ error: "email and password are required" }); }
 
@@ -197,7 +197,7 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
-app.get("/auth/me", authRequired, (req, res) => {
+app.get("/api/auth/me", authRequired, (req, res) => {
   res.json({ user: { id: req.user.sub, name: req.user.name, email: req.user.email } });
 });
 
