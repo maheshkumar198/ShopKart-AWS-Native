@@ -1,0 +1,238 @@
+name: ShopKart CI
+
+on:
+  workflow_dispatch: 
+  pull_request:
+    branches:
+      - develop
+      - qa
+      - main
+
+
+jobs:
+  
+  # test:
+  #   name: Test Microservices
+  #   runs-on: ubuntu-latest
+  #   needs: gitleaks
+
+  #   strategy:
+  #     matrix:
+  #       service:
+  #         - auth-service
+  #         - catalog-service
+  #         - order-service
+          
+
+  #   defaults:
+  #     run:
+  #       working-directory: services/${{ matrix.service }}
+
+  #   steps:
+  #     - name: Checkout source
+  #       uses: actions/checkout@v7
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+  #         cache: npm
+  #         cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     - name: Run tests with coverage
+  #       run: npm test -- --coverage
+
+  #     - name: Upload coverage
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: ${{ matrix.service }}-coverage
+  #         path: services/${{ matrix.service }}/coverage/
+
+  # sonarcube:
+  #   name: SonarQube Analysis
+  #   continue-on-error: true
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - test
+  #     - gitleaks
+    
+  #   steps:
+  #     - name: Checkout source
+  #       uses: actions/checkout@v7   
+
+  #     - name: Download auth coverage
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: auth-service-coverage
+  #         path: services/auth-service/coverage
+
+  #     - name: Download catalog coverage
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: catalog-service-coverage
+  #         path: services/catalog-service/coverage
+
+  #     - name: Download order coverage
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: order-service-coverage
+  #         path: services/order-service/coverage
+
+  #     - name: SonarQube Scan
+  #       uses: SonarSource/sonarqube-scan-action@v6
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+  #     - name: SonarQube Quality Gate
+  #       uses: SonarSource/sonarqube-quality-gate-action@v1
+  #       timeout-minutes: 5
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # snyk:
+  #   name: Snyk SCA - ${{ matrix.service }}
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - test
+  #     - sonarcube
+  #     - gitleaks
+
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       service:
+  #         - auth-service
+  #         - catalog-service
+  #         - order-service
+
+  #   defaults:
+  #     run:
+  #       working-directory: services/${{ matrix.service }}
+
+  #   steps:
+  #     - name: Checkout source
+  #       uses: actions/checkout@v7
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v7
+  #       with:
+  #         node-version: 22
+  #         cache: npm
+  #         cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     - name: Snyk dependency scan
+  #       uses: snyk/actions/node@master
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #       with:
+  #         command: test
+  #         args: --file=services/${{ matrix.service }}/package.json --severity-threshold=high
+
+  #     - name: Snyk monitor
+  #       uses: snyk/actions/node@master
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #       with:
+  #         command: monitor
+  #         args: --file=services/${{ matrix.service }}/package.json
+
+  # gitleaks:
+  #   name: Gitleaks Secret Scan
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout source
+  #       uses: actions/checkout@v7
+  #       with:
+  #         fetch-depth: 2
+
+  #     - name: Run Gitleaks
+  #       uses: gitleaks/gitleaks-action@v3
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         GITLEAKS_LOG_OPTS: "HEAD~1..HEAD"
+
+  docker-build-scan:
+    name: Build and Scan ${{ matrix.service }}
+    environment: development
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    # needs: 
+    #   - test
+    #   - snyk
+    #   - sonarcube
+    #   - gitleaks
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - ecs-auth-service
+          - ecs-catalog-service
+          - ecs-order-service
+    env:
+      REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+      IMAGE_NAME: shopkart/${{ matrix.service }}
+      IMAGE_TAG: ${{ github.sha }}
+      
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: services/${{ matrix.service }}/Dockerfile
+          failure-threshold: warning
+
+
+      - name: Build Docker image
+        run: |
+          docker build  -t "shopkart/${{ matrix.service }}:${{ github.sha }}" "services/${{ matrix.service }}"
+
+
+      #- name: Scan image with Trivy
+      #  uses: aquasecurity/trivy-action@0.35.0
+      #  with:
+      #    image-ref: shopkart/${{ matrix.service }}:${{ github.sha }}
+      #    format: sarif
+      #    severity: CRITICAL,HIGH,MEDIUM
+      #    exit-code: 0
+      #    ignore-unfixed: true
+      #    output: services/${{ matrix.service }}/${{ matrix.service }}-trivy-report.sarif
+
+      #- name: Upload Trivy SARIF report
+      #  if: always()
+      #  uses: actions/upload-artifact@v7
+      #  with:
+      #    name: trivy-report-${{ matrix.service }}
+      #    path: services/${{ matrix.service }}/${{ matrix.service }}-trivy-report.sarif
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.2.4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-ecr-role 
+          aws-region: ap-south-1
+          audience: sts.amazonaws.com
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2 
+        
+      - name: Tag image and push to ECR
+        run: |
+    
+          ECR_IMAGE="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+          docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${ECR_IMAGE}"
+          docker push "${ECR_IMAGE}"
+          docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${REGISTRY}/${IMAGE_NAME}:latest"
+          docker push "${REGISTRY}/${IMAGE_NAME}:latest"
+    
