@@ -177,8 +177,7 @@ const pool = process.env.NODE_ENV === "test"
 
 const redis = process.env.NODE_ENV === "test" ? null : new Redis(process.env.REDIS_URL || "redis://redis:6379");
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
-const CATALOG_URL = process.env.CATALOG_URL || "http://catalog-service:3002";
-
+const CATALOG_URL = process.env.CATALOG_URL || "http://catalog-service:3002/api";
 function authRequired(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -196,7 +195,7 @@ function cartKey(userId) {
 }
 
 
-app.get("/cart", authRequired, async (req, res) => {
+app.get("/api/cart", authRequired, async (req, res) => {
   try {
     const raw = process.env.NODE_ENV === "test" ? null : await redis.get(cartKey(req.user.sub));
     cartOperations.inc({ operation: "get", result: "success" });
@@ -208,7 +207,7 @@ app.get("/cart", authRequired, async (req, res) => {
   }
 });
 
-app.post("/cart/items", authRequired, async (req, res) => {
+app.post("/api/cart/items", authRequired, async (req, res) => {
   const { productId, quantity = 1 } = req.body || {};
   if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity <= 0) {
     return res.status(400).json({ error: "productId and positive integer quantity are required" });
@@ -237,7 +236,7 @@ app.post("/cart/items", authRequired, async (req, res) => {
   }
 });
 
-app.delete("/cart/items/:productId", authRequired, async (req, res) => {
+app.delete("/api/cart/items/:productId", authRequired, async (req, res) => {
   const productId = Number(req.params.productId);
   if (!Number.isInteger(productId)) return res.status(400).json({ error: "Invalid product id" });
 
@@ -266,7 +265,7 @@ async function catalogProduct(id) {
   return response.json();
 }
 
-app.post("/orders", authRequired, async (req, res) => {
+app.post("/api/orders", authRequired, async (req, res) => {
   try {
     let items = [];
     if (process.env.NODE_ENV !== "test") {
@@ -341,7 +340,7 @@ app.post("/orders", authRequired, async (req, res) => {
   }
 });
 
-app.get("/orders", authRequired, async (req, res) => {
+app.get("/api/orders", authRequired, async (req, res) => {
   if (process.env.NODE_ENV === "test") {
     return res.json({ data: [{ id: 1001, user_id: String(req.user.sub), total: 100, status: "CONFIRMED" }] });
   }
@@ -358,7 +357,7 @@ app.get("/orders", authRequired, async (req, res) => {
   }
 });
 
-app.get("/orders/:id", authRequired, async (req, res) => {
+app.get("/api/orders/:id", authRequired, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: "Invalid order id" });
 
