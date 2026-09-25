@@ -197,7 +197,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build  -t "shopkart/${{ matrix.service }}:${{ github.sha }}" "services/${{ matrix.service }}"
+          docker build  -t "${IMAGE_NAME}:${IMAGE_TAG}" "services/${{ matrix.service }}"
 
 
       #- name: Scan image with Trivy
