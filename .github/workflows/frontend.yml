@@ -14,7 +14,7 @@ permissions:
 
 env:
   REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
-  IMAGE_NAME: shopkart/ecs-frontend
+  IMAGE_NAME: shopkart/frontend
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build  -t "shopkart/frontend:${{ github.sha }}" "web"
+          docker build  -t "shopkart/ecs-frontend:${{ github.sha }}" "web"
           
     
       - name: Configure AWS credentials

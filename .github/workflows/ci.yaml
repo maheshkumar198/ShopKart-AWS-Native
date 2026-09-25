@@ -176,12 +176,12 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - ecs-auth-service
-          - ecs-catalog-service
-          - ecs-order-service
+          - auth-service
+          - catalog-service
+          - order-service
     env:
       REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
-      IMAGE_NAME: shopkart/${{ matrix.service }}
+      IMAGE_NAME: shopkart/ecs-${{ matrix.service }}
       IMAGE_TAG: ${{ github.sha }}
       
     steps:
