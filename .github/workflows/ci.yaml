@@ -230,9 +230,9 @@ jobs:
       - name: Tag image and push to ECR
         run: |
     
-          ECR_IMAGE="ecs-${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+          ECR_IMAGE="${REGISTRY}/$ecs-{IMAGE_NAME}:${IMAGE_TAG}"
           docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${ECR_IMAGE}"
           docker push "${ECR_IMAGE}"
-          docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "$ecs-{REGISTRY}/${IMAGE_NAME}:latest"
-          docker push "$ecs-{REGISTRY}/${IMAGE_NAME}:latest"
+          docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${REGISTRY}/ecs-${IMAGE_NAME}:latest"
+          docker push "${REGISTRY}/ecs-${IMAGE_NAME}:latest"
     
