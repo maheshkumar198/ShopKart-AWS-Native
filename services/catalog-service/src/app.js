@@ -118,7 +118,7 @@ const pool = process.env.NODE_ENV === "test"
       ssl: { rejectUnauthorized: false }
     });
 
-const redis = process.env.NODE_ENV === "test" ? null : new Redis(process.env.REDIS_URL || "redis://redis:6379");
+const redis = process.env.NODE_ENV === "test" ? null : new Redis(process.env.REDIS_URL);
 
 function seedProducts() {
   return [
@@ -139,7 +139,7 @@ async function getProducts() {
 }
 
 
-app.get("/products", async (_req, res) => {
+app.get("/api/products", async (_req, res) => {
   try {
     const data = await getProducts();
     res.json({ source: process.env.NODE_ENV === "test" ? "memory" : "redis-or-postgres", data });
@@ -149,7 +149,7 @@ app.get("/products", async (_req, res) => {
   }
 });
 
-app.get("/products/:id", async (req, res) => {
+app.get("/api/products/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: "Invalid product id" });
 
@@ -173,7 +173,7 @@ app.get("/products/:id", async (req, res) => {
   }
 });
 
-app.post("/products", async (req, res) => {
+app.post("/api/products", async (req, res) => {
   const { name, price, stock = 0 } = req.body || {};
   if (!name || typeof price !== "number" || price < 0 || !Number.isInteger(stock) || stock < 0) {
     return res.status(400).json({ error: "name, non-negative price and integer stock are required" });
