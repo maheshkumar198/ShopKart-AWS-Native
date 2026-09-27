@@ -17,3 +17,7 @@ output "order_task_role_arn" {
 output "frontend_task_role_arn" {
   value = aws_iam_role.frontend_task.arn
 }
+
+output "order_processor_lambda_role_arn" {
+  value = aws_iam_role.order_processor_lambda.arn
+}

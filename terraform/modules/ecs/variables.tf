@@ -57,3 +57,27 @@ variable "services" {
     }), null)
   }))
 }
+
+variable "load_balancer_target_groups" {
+  description = "ALB target group ARN for each ECS service"
+  type = map(string)
+  default = {}
+}
+
+variable "min_capacity" {
+  type    = number
+  default = 1
+}
+
+variable "max_capacity" {
+  type    = number
+  default = 3
+}
+
+variable "ecs_cluster_name" {
+  type = string
+}
+
+variable "ecs_service_names" {
+  type = map(string)
+}

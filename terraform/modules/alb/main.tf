@@ -153,7 +153,7 @@ resource "aws_lb_listener_rule" "catalog" {
 
   condition {
     path_pattern {
-      values = ["/api/catalog/*"]
+      values = ["/api/products*"]
     }
   }
 
@@ -170,7 +170,24 @@ resource "aws_lb_listener_rule" "order" {
 
   condition {
     path_pattern {
-      values = ["/api/orders/*"]
+      values = ["/api/orders*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.order.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "cart" {
+  listener_arn = aws_lb_listener.http.arn
+
+  priority = 25
+
+  condition {
+    path_pattern {
+      values = ["/api/cart*"]
     }
   }
 

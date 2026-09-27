@@ -31,3 +31,17 @@ output "log_group_names" {
     name => log_group.name
   }
 }
+
+output "scale_out_policy_arns" {
+  value = {
+    for service, policy in aws_appautoscaling_policy.ecs_scale_out :
+    service => policy.arn
+  }
+}
+
+output "scale_in_policy_arns" {
+  value = {
+    for service, policy in aws_appautoscaling_policy.ecs_scale_in :
+    service => policy.arn
+  }
+}
